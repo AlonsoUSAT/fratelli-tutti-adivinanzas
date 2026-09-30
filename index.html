@@ -1,0 +1,1823 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fratelli Tutti - Desafío Contrarreloj (Grupos 1 al 8, sin Grupo 4)</title>
+  <style>
+    /* ==========================================================================
+       VARIABLES Y PALETA DE COLOR NEÓN DARK MODE
+       ========================================================================== */
+    :root {
+      --bg-dark: #080a14;
+      --bg-card: rgba(18, 22, 40, 0.92);
+      --bg-card-inner: rgba(28, 34, 62, 0.72);
+      --primary-purple: #9d4edd;
+      --primary-violet: #7b2cbf;
+      --neon-purple: #c77dff;
+      --neon-cyan: #00f0ff;
+      --neon-blue: #3a86ff;
+      --neon-green: #10b981;
+      --neon-red: #ef4444;
+      --neon-gold: #f59e0b;
+      --text-light: #f8fafc;
+      --text-muted: #94a3b8;
+      --border-glow: rgba(157, 78, 221, 0.35);
+      --card-shadow: 0 10px 40px -5px rgba(0, 0, 0, 0.8), 0 0 25px -3px rgba(123, 44, 191, 0.3);
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 22px;
+      --font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(circle at 10% 15%, rgba(123, 44, 191, 0.25) 0%, transparent 45%),
+        radial-gradient(circle at 90% 85%, rgba(0, 240, 255, 0.18) 0%, transparent 45%),
+        radial-gradient(circle at 50% 50%, rgba(8, 10, 20, 1) 0%, transparent 100%);
+      background-attachment: fixed;
+      font-family: var(--font-family);
+      color: var(--text-light);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    #fx-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    .game-wrapper {
+      width: 100%;
+      max-width: 820px;
+      background: var(--bg-card);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid var(--border-glow);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--card-shadow);
+      padding: 26px 30px;
+      position: relative;
+      z-index: 10;
+      transition: all 0.3s ease;
+    }
+
+    /* CABECERA */
+    .header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      margin-bottom: 18px;
+    }
+
+    .title-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .title-group .logo-icon {
+      font-size: 2rem;
+      filter: drop-shadow(0 0 10px var(--neon-purple));
+    }
+
+    .title-group h1 {
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      background: linear-gradient(135deg, #ffffff 15%, var(--neon-purple) 65%, var(--neon-cyan) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .title-group .doc-badge {
+      font-size: 0.72rem;
+      padding: 3px 8px;
+      background: rgba(157, 78, 221, 0.2);
+      border: 1px solid rgba(199, 125, 255, 0.4);
+      color: var(--neon-purple);
+      border-radius: 20px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .icon-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: var(--text-light);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      padding: 7px 11px;
+      font-size: 1.05rem;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .icon-btn:hover {
+      background: rgba(157, 78, 221, 0.3);
+      border-color: var(--neon-purple);
+      transform: translateY(-2px);
+    }
+
+    /* BARRA DE METADATOS: CRONÓMETRO */
+    .status-ribbon {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      background: var(--bg-card-inner);
+      padding: 12px 18px;
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      margin-bottom: 20px;
+    }
+
+    .active-group-pill {
+      background: rgba(0, 240, 255, 0.15);
+      border: 1px solid var(--neon-cyan);
+      color: var(--neon-cyan);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      text-shadow: 0 0 8px rgba(0, 240, 255, 0.4);
+    }
+
+    .timer-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(10, 12, 24, 0.85);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      padding: 5px 14px;
+      border-radius: 20px;
+      position: relative;
+    }
+
+    .timer-label {
+      color: var(--neon-gold);
+      font-size: 0.76rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .timer-display {
+      font-family: monospace;
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--neon-gold);
+      text-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+      min-width: 90px;
+      text-align: center;
+    }
+
+    .penalty-flash {
+      position: absolute;
+      top: -12px;
+      right: -8px;
+      background: var(--neon-red);
+      color: #ffffff;
+      font-size: 0.75rem;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(239, 68, 68, 0.8);
+      animation: floatUp 0.7s ease-out forwards;
+    }
+
+    @keyframes floatUp {
+      0% { transform: translateY(0) scale(1); opacity: 1; }
+      100% { transform: translateY(-16px) scale(1.15); opacity: 0; }
+    }
+
+    /* PANTALLAS */
+    .screen-view {
+      display: none;
+      animation: fadeIn 0.35s ease-out forwards;
+    }
+
+    .screen-view.active {
+      display: block;
+    }
+
+    /* PANTALLA INICIAL DE CONFIGURACIÓN */
+    .welcome-card {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+      padding: 10px 0;
+    }
+
+    .mode-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(157, 78, 221, 0.18);
+      border: 1px solid var(--neon-purple);
+      color: var(--neon-purple);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+
+    .welcome-title {
+      font-size: 1.65rem;
+      font-weight: 800;
+      line-height: 1.3;
+    }
+
+    .welcome-desc {
+      max-width: 620px;
+      color: #cbd5e1;
+      font-size: 0.98rem;
+      line-height: 1.6;
+    }
+
+    .rules-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .rule-chip {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 7px 14px;
+      border-radius: 20px;
+      font-size: 0.83rem;
+      color: #e2e8f0;
+    }
+
+    .groups-setup-box {
+      width: 100%;
+      background: var(--bg-card-inner);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      text-align: left;
+    }
+
+    .setup-heading {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--neon-cyan);
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+
+    .group-inputs-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .group-input-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(12, 15, 28, 0.8);
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+    }
+
+    .group-tag-num {
+      background: rgba(168, 85, 247, 0.25);
+      color: var(--neon-purple);
+      border: 1px solid var(--neon-purple);
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 0.78rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .team-name-field {
+      width: 100%;
+      background: transparent;
+      border: none;
+      color: #ffffff;
+      font-size: 0.92rem;
+      outline: none;
+      font-family: inherit;
+    }
+
+    .team-name-field:focus {
+      color: var(--neon-cyan);
+    }
+
+    .start-btn {
+      background: linear-gradient(135deg, var(--primary-purple) 0%, var(--neon-blue) 100%);
+      color: #ffffff;
+      border: none;
+      border-radius: var(--radius-md);
+      padding: 14px 32px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 6px 20px rgba(157, 78, 221, 0.4);
+      transition: all 0.2s ease;
+      touch-action: manipulation;
+    }
+
+    .start-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 240, 255, 0.5);
+    }
+
+    /* PANTALLA DE JUEGO (ADIVINANZA) */
+    .riddle-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .riddle-group-title {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: var(--neon-purple);
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+    }
+
+    .riddle-progress {
+      font-size: 0.85rem;
+      color: var(--neon-cyan);
+      font-weight: 700;
+    }
+
+    .riddle-card {
+      background: linear-gradient(145deg, rgba(25, 30, 56, 0.92) 0%, rgba(16, 20, 38, 0.95) 100%);
+      border: 1px solid rgba(168, 85, 247, 0.35);
+      border-radius: var(--radius-md);
+      padding: 22px 24px;
+      margin-bottom: 16px;
+      box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.4);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .riddle-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: linear-gradient(to bottom, var(--neon-purple), var(--neon-cyan));
+    }
+
+    .riddle-poem {
+      font-size: 1.15rem;
+      line-height: 1.7;
+      color: #f8fafc;
+      font-style: italic;
+      margin-bottom: 14px;
+      white-space: pre-line;
+      text-align: center;
+    }
+
+    .riddle-question {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--neon-cyan);
+      text-align: center;
+      text-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+    }
+
+    /* CASILLAS DE LETRAS DE LA PALABRA Y BOTÓN DE PISTA (+2s) */
+    .word-clue-container {
+      background: rgba(18, 22, 42, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-md);
+      padding: 16px 20px;
+      margin-bottom: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .word-slots {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .char-slot {
+      width: 36px;
+      height: 44px;
+      background: rgba(10, 12, 24, 0.95);
+      border: 2px solid rgba(168, 85, 247, 0.4);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.35rem;
+      font-family: monospace;
+      font-weight: 800;
+      color: var(--text-light);
+      text-transform: uppercase;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+      transition: all 0.25s ease;
+    }
+
+    .char-slot.revealed {
+      border-color: var(--neon-cyan);
+      background: rgba(0, 240, 255, 0.15);
+      color: var(--neon-cyan);
+      text-shadow: 0 0 8px rgba(0, 240, 255, 0.8);
+      animation: popIn 0.3s ease;
+    }
+
+    .clue-action-btn {
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid var(--neon-gold);
+      color: var(--neon-gold);
+      padding: 8px 18px;
+      border-radius: 20px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .clue-action-btn:hover:not(:disabled) {
+      background: rgba(245, 158, 11, 0.28);
+      box-shadow: 0 0 12px rgba(245, 158, 11, 0.4);
+      transform: translateY(-2px);
+    }
+
+    .clue-action-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* ENTRADA ESCRITA */
+    .answer-section {
+      background: var(--bg-card-inner);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-md);
+      padding: 18px 20px;
+      margin-bottom: 10px;
+    }
+
+    .single-word-notice {
+      font-size: 0.78rem;
+      color: var(--neon-cyan);
+      font-weight: 600;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .answer-form {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .answer-input {
+      flex: 1;
+      min-width: 240px;
+      background: rgba(10, 12, 22, 0.95);
+      border: 2px solid rgba(168, 85, 247, 0.35);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      font-size: 1.05rem;
+      color: #ffffff;
+      outline: none;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+
+    .answer-input:focus {
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
+    }
+
+    .submit-btn {
+      background: linear-gradient(135deg, var(--neon-green) 0%, #059669 100%);
+      color: #ffffff;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 14px 26px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.35);
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .submit-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
+    }
+
+    .shake-anim {
+      animation: shake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+    }
+
+    @keyframes shake {
+      10%, 90% { transform: translate3d(-3px, 0, 0); }
+      20%, 80% { transform: translate3d(4px, 0, 0); }
+      30%, 50%, 70% { transform: translate3d(-5px, 0, 0); }
+      40%, 60% { transform: translate3d(5px, 0, 0); }
+    }
+
+    /* MODAL */
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(6, 8, 16, 0.9);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 999;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal-backdrop.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-box {
+      background: var(--bg-card);
+      border: 2px solid var(--border-glow);
+      border-radius: var(--radius-lg);
+      padding: 30px 26px;
+      max-width: 540px;
+      width: 100%;
+      text-align: center;
+      box-shadow: var(--card-shadow);
+      transform: scale(0.9) translateY(20px);
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .modal-backdrop.active .modal-box {
+      transform: scale(1) translateY(0);
+    }
+
+    .modal-icon {
+      font-size: 3.5rem;
+    }
+
+    .modal-title {
+      font-size: 1.6rem;
+      font-weight: 800;
+    }
+
+    .modal-title.win {
+      color: var(--neon-green);
+      text-shadow: 0 0 12px rgba(16, 185, 129, 0.5);
+    }
+
+    .modal-title.error {
+      color: var(--neon-red);
+      text-shadow: 0 0 12px rgba(239, 68, 68, 0.5);
+    }
+
+    .round-time-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid var(--neon-gold);
+      color: var(--neon-gold);
+      font-family: monospace;
+      font-size: 1.15rem;
+      font-weight: 800;
+      padding: 6px 16px;
+      border-radius: 20px;
+      margin: 0 auto;
+    }
+
+    /* RESPUESTA INDICADA POR SEPARADO */
+    .reveal-box {
+      background: rgba(10, 14, 28, 0.88);
+      border: 1px solid rgba(0, 240, 255, 0.35);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      text-align: left;
+    }
+
+    .reveal-tag {
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      font-weight: 800;
+      color: var(--neon-cyan);
+      letter-spacing: 0.6px;
+      margin-bottom: 4px;
+    }
+
+    .reveal-word {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #ffffff;
+      font-family: monospace;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+
+    .reveal-explanation {
+      font-size: 0.9rem;
+      color: #cbd5e1;
+      line-height: 1.45;
+    }
+
+    /* PODIO TOP 3 (CRITERIO: MENOR TIEMPO) */
+    .podium-section {
+      text-align: left;
+      margin-top: 10px;
+    }
+
+    /* PODIO TOP 3 (CRITERIO: MENOR TIEMPO) */
+    .podium-card-wrapper {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+
+    .podium-top3-grid {
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      gap: 14px;
+      width: 100%;
+      margin: 18px 0 24px 0;
+    }
+
+    .podium-pillar {
+      flex: 1;
+      max-width: 225px;
+      background: var(--bg-card-inner);
+      border-radius: var(--radius-md);
+      padding: 18px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      position: relative;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .podium-pillar:hover {
+      transform: translateY(-4px);
+    }
+
+    .podium-pillar.rank-1 {
+      border: 2px solid var(--neon-gold);
+      background: linear-gradient(180deg, rgba(245, 158, 11, 0.25) 0%, rgba(20, 24, 45, 0.95) 100%);
+      box-shadow: 0 0 25px rgba(245, 158, 11, 0.4);
+      min-height: 245px;
+      order: 2;
+    }
+
+    .podium-pillar.rank-2 {
+      border: 2px solid #94a3b8;
+      background: linear-gradient(180deg, rgba(148, 163, 184, 0.2) 0%, rgba(20, 24, 45, 0.95) 100%);
+      box-shadow: 0 0 15px rgba(148, 163, 184, 0.25);
+      min-height: 205px;
+      order: 1;
+    }
+
+    .podium-pillar.rank-3 {
+      border: 2px solid #cd7f32;
+      background: linear-gradient(180deg, rgba(205, 127, 50, 0.2) 0%, rgba(20, 24, 45, 0.95) 100%);
+      box-shadow: 0 0 15px rgba(205, 127, 50, 0.25);
+      min-height: 175px;
+      order: 3;
+    }
+
+    .podium-medal {
+      font-size: 2.6rem;
+      margin-bottom: 6px;
+      filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.6));
+    }
+
+    .podium-rank-label {
+      font-size: 0.82rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 6px;
+    }
+
+    .podium-pillar.rank-1 .podium-rank-label { color: var(--neon-gold); }
+    .podium-pillar.rank-2 .podium-rank-label { color: #cbd5e1; }
+    .podium-pillar.rank-3 .podium-rank-label { color: #f59e0b; }
+
+    .podium-team-name {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 8px;
+      word-break: break-word;
+      line-height: 1.25;
+      text-align: center;
+    }
+
+    .podium-pillar.rank-1 .podium-team-name {
+      font-size: 1.25rem;
+      color: #ffffff;
+      text-shadow: 0 0 12px rgba(245, 158, 11, 0.6);
+    }
+
+    .podium-time {
+      font-family: monospace;
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--neon-cyan);
+      background: rgba(0, 0, 0, 0.5);
+      padding: 4px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(0, 240, 255, 0.35);
+      text-shadow: 0 0 8px rgba(0, 240, 255, 0.5);
+    }
+
+    .leaderboard-box {
+      width: 100%;
+      background: var(--bg-card-inner);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-md);
+      padding: 18px 20px;
+      text-align: left;
+      margin-top: 10px;
+    }
+
+    .podium-header {
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--neon-gold);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .podium-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .podium-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-card-inner);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      font-size: 0.92rem;
+    }
+
+    .podium-row.first-place {
+      border-color: var(--neon-gold);
+      background: rgba(245, 158, 11, 0.15);
+      box-shadow: 0 0 12px rgba(245, 158, 11, 0.3);
+    }
+
+    .team-badge-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+    }
+
+    .time-badge-row {
+      font-family: monospace;
+      font-weight: 800;
+      color: var(--neon-cyan);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0.6); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    @media (max-width: 640px) {
+      .game-wrapper {
+        padding: 20px 16px;
+      }
+      .group-inputs-grid {
+        grid-template-columns: 1fr;
+      }
+      .answer-form {
+        flex-direction: column;
+      }
+      .submit-btn {
+        width: 100%;
+        justify-content: center;
+      }
+      .char-slot {
+        width: 30px;
+        height: 38px;
+        font-size: 1.15rem;
+      }
+      .podium-top3-grid {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+      }
+      .podium-pillar.rank-1,
+      .podium-pillar.rank-2,
+      .podium-pillar.rank-3 {
+        min-height: auto;
+        order: unset;
+        padding: 14px;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .podium-medal {
+        font-size: 2rem;
+        margin-bottom: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="fx-canvas"></canvas>
+
+  <main class="game-wrapper" role="main" aria-label="Desafío Fratelli Tutti">
+    
+    <!-- BARRA SUPERIOR -->
+    <header class="header-bar">
+      <div class="title-group">
+        <span class="logo-icon" aria-hidden="true">🕊️</span>
+        <div>
+          <h1>Fratelli Tutti Enigmas</h1>
+          <span class="doc-badge">7 Preguntas • Grupos 1, 2, 3, 5, 6, 7 y 8</span>
+        </div>
+      </div>
+
+      <div class="header-controls">
+        <button id="sound-btn" class="icon-btn" title="Alternar Sonido" aria-label="Alternar Sonido">
+          <span id="sound-icon">🔊</span>
+        </button>
+        <button id="reset-all-btn" class="icon-btn" title="Reiniciar Juego" aria-label="Reiniciar Juego">
+          <span aria-hidden="true">🔄</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- PANTALLA 1: REGISTRO DE LOS 7 GRUPOS PARTICIPANTES (SIN EL GRUPO 4) -->
+    <section id="screen-register" class="screen-view active">
+      <div class="welcome-card">
+        <div class="mode-badge">
+          <span>⏱️ Criterio Ganador: Menor Tiempo de Respuesta</span>
+        </div>
+        <h2 class="welcome-title">Desafío Contrarreloj por Grupos</h2>
+        <p class="welcome-desc">
+          Exactamente <strong>7 adivinanzas de una sola palabra</strong> inspiradas en la encíclica <strong>Fratelli Tutti</strong>, 
+          asignadas a los grupos: <strong>1, 2, 3, 5, 6, 7 y 8 (sin tomar en cuenta el Grupo 4)</strong>.
+          ¡El grupo que resuelva su enigma en el <strong>menor tiempo posible</strong> ganará el trofeo de oro!
+        </p>
+
+        <div class="rules-list">
+          <span class="rule-chip">🎯 1 pregunta única de 1 sola palabra</span>
+          <span class="rule-chip">💡 Pistas de letras (+2s): máx. 3 en largas y 2 en cortas</span>
+          <span class="rule-chip">🏆 Podio Top 3 de los más veloces</span>
+        </div>
+
+        <div class="groups-setup-box">
+          <div class="setup-heading">👥 Nombres de los Grupos (1, 2, 3, 5, 6, 7 y 8):</div>
+          <div class="group-inputs-grid" id="group-inputs-grid">
+            <!-- 7 inputs generados dinámicamente para los grupos 1, 2, 3, 5, 6, 7 y 8 -->
+          </div>
+        </div>
+
+        <button type="button" id="start-tournament-btn" class="start-btn">
+          <span>¡Iniciar Desafío Contrarreloj!</span>
+          <span aria-hidden="true">🚀</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- PANTALLA 2: JUEGO EN VIVO (CONTRARRELOJ) -->
+    <section id="screen-game" class="screen-view">
+      
+      <!-- CINTA DE METADATOS: GRUPO EN TURNO Y CRONÓMETRO -->
+      <div class="status-ribbon">
+        <div class="active-group-pill" id="active-group-label">
+          <span>👥 Turno: Grupo 1</span>
+        </div>
+
+        <!-- CRONÓMETRO EN TIEMPO REAL -->
+        <div class="timer-container" id="timer-box" title="Tiempo transcurrido para este grupo">
+          <span class="timer-label">⏱️ Tiempo:</span>
+          <span id="live-timer" class="timer-display">00:00.0</span>
+          <span id="penalty-feedback" class="penalty-flash" style="display: none;">+2s</span>
+        </div>
+      </div>
+
+      <!-- CABECERA DEL ENIGMA (SIN TEMA ARRIBA PARA NO DELATAR LA RESPUESTA) -->
+      <div class="riddle-header">
+        <span class="riddle-group-title" id="riddle-group-title">ENIGMA PARA EL GRUPO 1</span>
+        <span class="riddle-progress" id="riddle-counter">Pregunta 1 de 7</span>
+      </div>
+
+      <!-- TARJETA DE LA ADIVINANZA -->
+      <div class="riddle-card" id="riddle-box">
+        <p class="riddle-poem" id="riddle-text">
+          <!-- Poema de la adivinanza -->
+        </p>
+        <div class="riddle-question" id="riddle-question">
+          ¿Qué es?
+        </div>
+      </div>
+
+      <!-- CASILLAS DE LETRAS Y PISTA OPCIONAL (+2 SEGUNDOS) -->
+      <div class="word-clue-container">
+        <div class="word-slots" id="word-slots-wrapper">
+          <!-- Espacios de letras de la palabra generados por JS -->
+        </div>
+
+        <button type="button" id="reveal-letter-btn" class="clue-action-btn">
+          <span>💡 Revelar una Letra (+2s al reloj)</span>
+        </button>
+      </div>
+
+      <!-- ENTRADA DE RESPUESTA ESCRITA (SOLO UNA PALABRA) -->
+      <div class="answer-section">
+        <div class="single-word-notice">✍️ Escribe una sola palabra exacta:</div>
+        <form id="answer-form" class="answer-form" onsubmit="return false;">
+          <input 
+            type="text" 
+            id="user-answer-input" 
+            class="answer-input" 
+            placeholder="Escribe la palabra aquí..." 
+            autocomplete="off"
+            spellcheck="false"
+          >
+          <button type="submit" id="submit-answer-btn" class="submit-btn">
+            <span>Comprobar</span>
+            <span aria-hidden="true">✔</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- BOTÓN VER PODIO AL FINALIZAR -->
+      <div id="game-finished-bar" style="display: none; text-align: center; margin-top: 14px;">
+        <button type="button" id="game-view-podium-btn" class="start-btn">
+          <span>Ver Podio</span>
+          <span aria-hidden="true">🏆</span>
+        </button>
+      </div>
+
+    </section>
+
+    <!-- PANTALLA 3: PODIO OFICIAL DE LOS 3 PRIMEROS PUESTOS -->
+    <section id="screen-podium" class="screen-view">
+      <div class="podium-card-wrapper">
+        <div class="mode-badge" style="background: rgba(245, 158, 11, 0.15); border-color: var(--neon-gold); color: var(--neon-gold); margin-bottom: 8px;">
+          <span>👑 ¡Desafío Finalizado!</span>
+        </div>
+
+        <h2 class="welcome-title" style="margin-bottom: 6px;">🏆 Podio Oficial de Ganadores</h2>
+        <p class="welcome-desc" style="margin-bottom: 12px;">
+          Reconocimiento a los 3 grupos más veloces en resolver su enigma de <strong>Fratelli Tutti</strong>.
+        </p>
+
+        <!-- PODIO VISUAL TOP 3 -->
+        <div class="podium-top3-grid" id="podium-top3-grid">
+          <!-- Inyectado dinámicamente por JS: 2° Puesto, 1° Puesto, 3° Puesto -->
+        </div>
+
+        <!-- CLASIFICACIÓN GENERAL -->
+        <div class="leaderboard-box">
+          <div class="setup-heading" style="color: var(--neon-cyan); margin-bottom: 12px;">
+            📊 Tabla General de Tiempos:
+          </div>
+          <div class="podium-list" id="full-leaderboard-list">
+            <!-- Inyectado por JS -->
+          </div>
+        </div>
+
+        <div style="margin-top: 24px;">
+          <button type="button" id="podium-restart-btn" class="start-btn">
+            <span>Iniciar Nuevo Desafío</span>
+            <span aria-hidden="true">🔄</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL DE FEEDBACK Y RESPUESTA SEPARADA -->
+  <div class="modal-backdrop" id="feedback-modal" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal-box">
+      <div class="modal-icon" id="modal-icon">🎉</div>
+      <h2 class="modal-title" id="modal-title">¡Respuesta Correcta!</h2>
+
+      <!-- TIEMPO LOGRADO EN ESTA RONDA -->
+      <div class="round-time-badge" id="modal-time-badge">
+        <span>⏱️ Tiempo: 08.4 segundos</span>
+      </div>
+
+      <!-- RESPUESTA INDICADA POR SEPARADO -->
+      <div class="reveal-box">
+        <div class="reveal-tag">Palabra correcta del enigma:</div>
+        <div class="reveal-word" id="modal-revealed-word">FRATERNIDAD</div>
+        <p class="reveal-explanation" id="modal-explanation">
+          Cita y explicación de Fratelli Tutti.
+        </p>
+      </div>
+
+      <button id="modal-action-btn" class="start-btn" style="margin-top: 6px;">
+        <span>Siguiente Grupo</span>
+        <span aria-hidden="true">➔</span>
+      </button>
+    </div>
+  </div>
+
+  <script>
+    /* ==========================================================================
+       BANCO DE EXACTAMENTE 7 PREGUNTAS: UNA POR GRUPO (1, 2, 3, 5, 6, 7 y 8)
+       ¡NO SE TOMA EN CUENTA EL GRUPO 04!
+       CADA RESPUESTA ES EXACTAMENTE DE UNA SOLA PALABRA.
+       ========================================================================== */
+    const GROUP_RIDDLES = [
+      {
+        groupNum: 1,
+        defaultName: "Grupo 1",
+        poem: "Aparece cuando el dinero se vuelve el rey supremo,\ny a los abuelos o a los frágiles los tratan como un freno.\nLos marginan como cosas que ya no tienen provecho ni remedio.",
+        question: "¿Qué es?",
+        answer: "DESCARTE", // 1 SOLA PALABRA
+        explanation: "Fratelli Tutti (Capítulo 1, N° 18-21): Los seres humanos nunca pueden ser objeto de descarte cuando el interés económico egoísta prima sobre el valor de la persona."
+      },
+      {
+        groupNum: 2,
+        defaultName: "Grupo 2",
+        poem: "Iba apurado en su mula, pero al ver a un herido tirado en el camino,\nno miró para otro lado como el clérigo o el levino.\nLe vendó las heridas, pagó la posada y le regaló su tiempo y destino.",
+        question: "¿Quién es?",
+        answer: "SAMARITANO", // 1 SOLA PALABRA
+        explanation: "Fratelli Tutti (Capítulo 2, N° 56-83): Jesús propone al buen samaritano como modelo del corazón compasivo que se hace prójimo de quien sufre."
+      },
+      {
+        groupNum: 3,
+        defaultName: "Grupo 3",
+        poem: "No se compra en el mercado ni se vende en un bazar;\nhace que a cualquier extraño como hermano puedas mirar.\nSi nos une en todo el mundo, la esperanza va a brillar.",
+        question: "¿Qué es?",
+        answer: "FRATERNIDAD", // 1 SOLA PALABRA
+        explanation: "Fratelli Tutti (Capítulo 3, N° 1-2, 87-95): El Papa Francisco convoca al amor que trasciende toda barrera geográfica y une a todos en hermandad."
+      },
+      {
+        groupNum: 5, // SE OMITIÓ EL GRUPO 4 SEGÚN INDICACIÓN
+        defaultName: "Grupo 5",
+        poem: "No es la politiquería de promesas que se lleva el viento,\nni buscar votos fáciles con engaño y aspaviento.\nEs el amor social más alto que crea puentes y trabajo para el pueblo contento.",
+        question: "¿Qué es?",
+        answer: "CARIDAD", // 1 SOLA PALABRA
+        explanation: "Fratelli Tutti (Capítulo 5, N° 180-186): La caridad política es una altísima vocación que transforma las instituciones al servicio del bien común de los más vulnerables."
+      },
+      {
+        groupNum: 6,
+        defaultName: "Grupo 6",
+        poem: "No son dos personas gritando en la televisión o en internet,\nni monólogos de sordos llenos de odio y de desdén.\nEs sentarse a escuchar, mirarse a los ojos y construir el bien.",
+        question: "¿Qué es?",
+        answer: "DIALOGO", // 1 SOLA PALABRA
+        explanation: "Fratelli Tutti (Capítulo 6, N° 198-203): El diálogo social sincero y paciente es la única vía para desarmar la polarización y edificar la cultura del encuentro."
+      },
+      {
+        groupNum: 7, // AHORA SÍ INCLUIDO
+        defaultName: "Grupo 7",
+        poem: "No es tapar las injusticias ni olvidar con cobardía;\nes sanar de raíz la herida para devolver la alegría.\nDesarma la venganza y rompe las cadenas del rencor cada día.",
+        question: "¿Qué es?",
+        answer: "PERDON", // 1 SOLA PALABRA
+        explanation: "Fratelli Tutti (Capítulo 7, N° 236-252): El perdón no implica olvido ni impunidad, sino la grandeza de frenar la espiral de la venganza para sanar la sociedad."
+      },
+      {
+        groupNum: 8,
+        defaultName: "Grupo 8",
+        poem: "No se logra con misiles, con rencores ni con guerras de terror;\nbrota cuando las religiones reconocen a un mismo Creador de amor.\nDesarma los odios y hace que el mundo cante en armonía y sin temor.",
+        question: "¿Qué es?",
+        answer: "PAZ", // 1 SOLA PALABRA
+        explanation: "Fratelli Tutti (Capítulo 8, N° 256-261, 281-285): Las religiones están llamadas al servicio de la paz mundial y de la fraternidad humana, repudiando toda violencia."
+      }
+    ];
+
+    /* ==========================================================================
+       CONTROLADOR DE SONIDOS SINTETIZADOS (WEB AUDIO API PURA)
+       ========================================================================== */
+    class SynthesizerAudio {
+      constructor() {
+        this.ctx = null;
+        this.enabled = true;
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) {
+            this.ctx = new AudioContext();
+          }
+        }
+        if (this.ctx && this.ctx.state === "suspended") {
+          this.ctx.resume();
+        }
+      }
+
+      playTone(freq, type = "sine", duration = 0.15, gainVal = 0.1) {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
+
+        try {
+          const osc = this.ctx.createOscillator();
+          const gainNode = this.ctx.createGain();
+
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+
+          gainNode.gain.setValueAtTime(gainVal, this.ctx.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+
+          osc.connect(gainNode);
+          gainNode.connect(this.ctx.destination);
+
+          osc.start();
+          osc.stop(this.ctx.currentTime + duration);
+        } catch (e) {}
+      }
+
+      playSuccess() {
+        this.playTone(523.25, "triangle", 0.1, 0.15);
+        setTimeout(() => this.playTone(659.25, "triangle", 0.1, 0.15), 80);
+        setTimeout(() => this.playTone(783.99, "triangle", 0.12, 0.15), 160);
+        setTimeout(() => this.playTone(1046.50, "sine", 0.25, 0.15), 240);
+      }
+
+      playError() {
+        this.playTone(185, "sawtooth", 0.22, 0.12);
+        setTimeout(() => this.playTone(138, "sawtooth", 0.25, 0.12), 90);
+      }
+
+      playPenalty() {
+        this.playTone(330, "sine", 0.1, 0.1);
+        setTimeout(() => this.playTone(440, "sine", 0.15, 0.1), 80);
+      }
+
+      playFanfare() {
+        if (!this.enabled) return;
+        const notes = [440, 554.37, 659.25, 880, 1108.73];
+        notes.forEach((freq, idx) => {
+          setTimeout(() => this.playTone(freq, "triangle", 0.3, 0.12), idx * 100);
+        });
+      }
+
+      toggleSound() {
+        this.enabled = !this.enabled;
+        return this.enabled;
+      }
+    }
+
+    /* ==========================================================================
+       SISTEMA DE CONFETI EN CANVAS (PARTÍCULAS PURAS)
+       ========================================================================== */
+    class CanvasConfetti {
+      constructor(canvasId) {
+        this.canvas = document.getElementById(canvasId);
+        this.ctx = this.canvas.getContext("2d");
+        this.particles = [];
+        this.animId = null;
+        this.resize();
+        window.addEventListener("resize", () => this.resize());
+      }
+
+      resize() {
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+      }
+
+      burst(count = 75) {
+        const colors = ["#c77dff", "#00f0ff", "#10b981", "#f59e0b", "#ff007f", "#3a86ff"];
+        for (let i = 0; i < count; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const speed = Math.random() * 7 + 3;
+          this.particles.push({
+            x: window.innerWidth / 2,
+            y: window.innerHeight / 2.3,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed - 3.5,
+            size: Math.random() * 8 + 4,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            rotation: Math.random() * 360,
+            rotationSpeed: (Math.random() - 0.5) * 10,
+            opacity: 1,
+            gravity: 0.2,
+            drag: 0.98
+          });
+        }
+        if (!this.animId) {
+          this.render();
+        }
+      }
+
+      render() {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+          const p = this.particles[i];
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += p.gravity;
+          p.vx *= p.drag;
+          p.rotation += p.rotationSpeed;
+          p.opacity -= 0.012;
+
+          if (p.opacity <= 0 || p.y > this.canvas.height) {
+            this.particles.splice(i, 1);
+            continue;
+          }
+
+          this.ctx.save();
+          this.ctx.translate(p.x, p.y);
+          this.ctx.rotate((p.rotation * Math.PI) / 180);
+          this.ctx.globalAlpha = Math.max(0, p.opacity);
+          this.ctx.fillStyle = p.color;
+          this.ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+          this.ctx.restore();
+        }
+
+        if (this.particles.length > 0) {
+          this.animId = requestAnimationFrame(() => this.render());
+        } else {
+          this.animId = null;
+          this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        }
+      }
+    }
+
+    /* ==========================================================================
+       CONTROLADOR DEL JUEGO CONTRARRELOJ
+       7 PREGUNTAS: GRUPOS 1, 2, 3, 5, 6, 7 y 8 (SIN GRUPO 4)
+       ========================================================================== */
+    class TimeAttackGame {
+      constructor() {
+        this.audio = new SynthesizerAudio();
+        this.confetti = new CanvasConfetti("fx-canvas");
+
+        this.questions = [...GROUP_RIDDLES];
+        this.currentIdx = 0;
+        this.currentQuestion = null;
+
+        // Cronómetro
+        this.timerInterval = null;
+        this.startTime = 0;
+        this.elapsedMs = 0;
+        this.isTimerRunning = false;
+
+        // Letras reveladas y límite de pistas por palabra (máx. 3 en largas, 2 en cortas)
+        this.revealedLetters = new Set();
+        this.cluesUsed = 0;
+        this.maxClues = 3;
+
+        // Registro de tiempos por grupo
+        this.groupResults = [];
+
+        // DOM
+        this.dom = {
+          screenRegister: document.getElementById("screen-register"),
+          screenGame: document.getElementById("screen-game"),
+          screenPodium: document.getElementById("screen-podium"),
+          podiumTop3Grid: document.getElementById("podium-top3-grid"),
+          fullLeaderboardList: document.getElementById("full-leaderboard-list"),
+          podiumRestartBtn: document.getElementById("podium-restart-btn"),
+          gameFinishedBar: document.getElementById("game-finished-bar"),
+          gameViewPodiumBtn: document.getElementById("game-view-podium-btn"),
+          groupInputsGrid: document.getElementById("group-inputs-grid"),
+          startTournamentBtn: document.getElementById("start-tournament-btn"),
+          soundBtn: document.getElementById("sound-btn"),
+          soundIcon: document.getElementById("sound-icon"),
+          resetAllBtn: document.getElementById("reset-all-btn"),
+          activeGroupLabel: document.getElementById("active-group-label"),
+          liveTimer: document.getElementById("live-timer"),
+          penaltyFeedback: document.getElementById("penalty-feedback"),
+          riddleGroupTitle: document.getElementById("riddle-group-title"),
+          riddleCounter: document.getElementById("riddle-counter"),
+          riddleBox: document.getElementById("riddle-box"),
+          riddleText: document.getElementById("riddle-text"),
+          riddleQuestion: document.getElementById("riddle-question"),
+          wordSlotsWrapper: document.getElementById("word-slots-wrapper"),
+          revealLetterBtn: document.getElementById("reveal-letter-btn"),
+          answerForm: document.getElementById("answer-form"),
+          userAnswerInput: document.getElementById("user-answer-input"),
+          submitAnswerBtn: document.getElementById("submit-answer-btn"),
+          // Modal
+          modal: document.getElementById("feedback-modal"),
+          modalIcon: document.getElementById("modal-icon"),
+          modalTitle: document.getElementById("modal-title"),
+          modalTimeBadge: document.getElementById("modal-time-badge"),
+          modalRevealedWord: document.getElementById("modal-revealed-word"),
+          modalExplanation: document.getElementById("modal-explanation"),
+          modalActionBtn: document.getElementById("modal-action-btn")
+        };
+
+        this.initSetupScreen();
+        this.bindEvents();
+      }
+
+      initSetupScreen() {
+        this.dom.groupInputsGrid.innerHTML = "";
+        this.questions.forEach((q) => {
+          const item = document.createElement("div");
+          item.className = "group-input-item";
+          item.innerHTML = `
+            <span class="group-tag-num">Grupo ${q.groupNum}</span>
+            <input 
+              type="text" 
+              class="team-name-field" 
+              id="team-input-${q.groupNum}" 
+              value="${q.defaultName}" 
+              placeholder="Nombre del Grupo ${q.groupNum}"
+              maxlength="22"
+            />
+          `;
+          this.dom.groupInputsGrid.appendChild(item);
+        });
+      }
+
+      bindEvents() {
+        this.dom.startTournamentBtn.addEventListener("click", () => this.startTournament());
+
+        if (this.dom.podiumRestartBtn) {
+          this.dom.podiumRestartBtn.addEventListener("click", () => this.resetToRegistration());
+        }
+
+        if (this.dom.gameViewPodiumBtn) {
+          this.dom.gameViewPodiumBtn.addEventListener("click", () => this.showPodiumScreen());
+        }
+
+        this.dom.soundBtn.addEventListener("click", () => {
+          const on = this.audio.toggleSound();
+          this.dom.soundIcon.textContent = on ? "🔊" : "🔇";
+        });
+
+        this.dom.resetAllBtn.addEventListener("click", () => {
+          if (confirm("¿Deseas reiniciar el torneo y volver a la configuración de grupos?")) {
+            this.stopTimer();
+            this.resetToRegistration();
+          }
+        });
+
+        // Botón de Pista: Revelar una letra (+2s de penalización)
+        this.dom.revealLetterBtn.addEventListener("click", () => this.revealNextLetter());
+
+        // Envío de respuesta
+        this.dom.answerForm.addEventListener("submit", (e) => {
+          e.preventDefault();
+          this.handleAnswerSubmit();
+        });
+
+        this.dom.modalActionBtn.addEventListener("click", () => this.handleModalAction());
+      }
+
+      normalize(text) {
+        return text
+          .toUpperCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .trim();
+      }
+
+      formatTime(ms) {
+        const totalSecs = ms / 1000;
+        const mins = Math.floor(totalSecs / 60);
+        const secs = Math.floor(totalSecs % 60);
+        const tenths = Math.floor((ms % 1000) / 100);
+        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${tenths}`;
+      }
+
+      startTimer() {
+        this.stopTimer();
+        this.startTime = Date.now();
+        this.isTimerRunning = true;
+        this.timerInterval = setInterval(() => {
+          this.elapsedMs = Date.now() - this.startTime;
+          this.dom.liveTimer.textContent = this.formatTime(this.elapsedMs);
+        }, 60);
+      }
+
+      stopTimer() {
+        if (this.timerInterval) {
+          clearInterval(this.timerInterval);
+          this.timerInterval = null;
+        }
+        this.isTimerRunning = false;
+      }
+
+      addTimePenalty(seconds = 2) {
+        // Añadir 2 segundos a la marca del reloj
+        this.startTime -= (seconds * 1000);
+        this.elapsedMs = Date.now() - this.startTime;
+        this.dom.liveTimer.textContent = this.formatTime(this.elapsedMs);
+
+        // Animación visual de +2s
+        this.dom.penaltyFeedback.style.display = "block";
+        this.dom.penaltyFeedback.className = "penalty-flash";
+        setTimeout(() => {
+          this.dom.penaltyFeedback.style.display = "none";
+        }, 700);
+
+        this.audio.playPenalty();
+      }
+
+      startTournament() {
+        this.questions.forEach((q) => {
+          const inputEl = document.getElementById(`team-input-${q.groupNum}`);
+          if (inputEl && inputEl.value.trim()) {
+            q.customName = inputEl.value.trim();
+          } else {
+            q.customName = q.defaultName;
+          }
+        });
+
+        this.currentIdx = 0;
+        this.groupResults = [];
+        if (this.dom.gameFinishedBar) {
+          this.dom.gameFinishedBar.style.display = "none";
+        }
+
+        this.dom.screenRegister.classList.remove("active");
+        this.dom.screenGame.classList.add("active");
+
+        this.loadRiddle(this.currentIdx);
+      }
+
+      loadRiddle(idx) {
+        if (idx >= this.questions.length) {
+          this.finishTournament();
+          return;
+        }
+
+        this.currentQuestion = this.questions[idx];
+        const groupName = this.currentQuestion.customName;
+
+        this.dom.activeGroupLabel.innerHTML = `<span>👥 Turno: <strong>${groupName}</strong></span>`;
+        this.dom.riddleCounter.textContent = `Pregunta ${idx + 1} de ${this.questions.length}`;
+        this.dom.riddleGroupTitle.textContent = `ENIGMA ASIGNADO: GRUPO ${this.currentQuestion.groupNum}`;
+        this.dom.riddleText.textContent = this.currentQuestion.poem;
+        this.dom.riddleQuestion.textContent = this.currentQuestion.question;
+
+        // Resetear letras reveladas para esta palabra
+        this.revealedLetters.clear();
+        const targetWord = this.normalize(this.currentQuestion.answer);
+
+        // Palabra corta (<= 6 letras) -> máx. 2 pistas. Palabra larga (>= 7 letras) -> máx. 3 pistas
+        const isShortWord = targetWord.length <= 6;
+        this.maxClues = isShortWord ? 2 : 3;
+        // Garantizar que siempre quede al menos 1 letra para adivinar
+        this.maxClues = Math.min(this.maxClues, Math.max(1, targetWord.length - 1));
+        this.cluesUsed = 0;
+
+        this.renderWordSlots();
+        this.updateClueButtonUI();
+
+        // Limpiar input y habilitar
+        this.dom.userAnswerInput.value = "";
+        this.dom.userAnswerInput.disabled = false;
+        this.dom.submitAnswerBtn.disabled = false;
+        this.dom.userAnswerInput.focus();
+
+        // Iniciar cronómetro
+        this.dom.liveTimer.textContent = "00:00.0";
+        this.startTimer();
+      }
+
+      updateClueButtonUI() {
+        const remaining = this.maxClues - this.cluesUsed;
+        const targetWord = this.normalize(this.currentQuestion.answer);
+        const isShort = targetWord.length <= 6;
+        const tipoLabel = isShort ? "corta: máx. 2" : "larga: máx. 3";
+
+        if (this.cluesUsed >= this.maxClues) {
+          this.dom.revealLetterBtn.disabled = true;
+          this.dom.revealLetterBtn.innerHTML = `<span>🚫 Límite alcanzado (${this.maxClues} máx.)</span>`;
+        } else {
+          this.dom.revealLetterBtn.disabled = false;
+          this.dom.revealLetterBtn.innerHTML = `<span>💡 Revelar Letra (+2s) [${this.cluesUsed}/${this.maxClues} usadas]</span>`;
+        }
+      }
+
+      renderWordSlots() {
+        this.dom.wordSlotsWrapper.innerHTML = "";
+        const targetWord = this.normalize(this.currentQuestion.answer);
+
+        for (let i = 0; i < targetWord.length; i++) {
+          const char = targetWord[i];
+          const slot = document.createElement("div");
+          slot.className = "char-slot";
+
+          if (this.revealedLetters.has(char)) {
+            slot.textContent = char;
+            slot.classList.add("revealed");
+          } else {
+            slot.textContent = "_";
+          }
+          this.dom.wordSlotsWrapper.appendChild(slot);
+        }
+      }
+
+      revealNextLetter() {
+        if (!this.isTimerRunning) return;
+        if (this.cluesUsed >= this.maxClues) return;
+
+        const targetWord = this.normalize(this.currentQuestion.answer);
+        const unrevealed = [];
+
+        for (const char of targetWord) {
+          if (!this.revealedLetters.has(char)) {
+            unrevealed.push(char);
+          }
+        }
+
+        if (unrevealed.length > 0) {
+          // Seleccionar una letra aún no revelada
+          const charToReveal = unrevealed[Math.floor(Math.random() * unrevealed.length)];
+          this.revealedLetters.add(charToReveal);
+          this.cluesUsed++;
+
+          // Penalización de +2 segundos
+          this.addTimePenalty(2);
+
+          // Actualizar casillas y estado del botón
+          this.renderWordSlots();
+          this.updateClueButtonUI();
+        } else {
+          this.dom.revealLetterBtn.disabled = true;
+        }
+
+        this.dom.userAnswerInput.focus();
+      }
+
+      handleAnswerSubmit() {
+        if (!this.isTimerRunning) return;
+
+        const raw = this.dom.userAnswerInput.value;
+        const norm = this.normalize(raw);
+
+        if (!norm) {
+          this.dom.userAnswerInput.focus();
+          return;
+        }
+
+        // Validación estricta de 1 SOLA PALABRA
+        const targetNorm = this.normalize(this.currentQuestion.answer);
+        const isMatch = (norm === targetNorm);
+
+        if (isMatch) {
+          // ACIERTO: Detener cronómetro
+          this.stopTimer();
+          const finalTimeMs = this.elapsedMs;
+          const formatted = this.formatTime(finalTimeMs);
+
+          this.audio.playSuccess();
+          this.confetti.burst(80);
+
+          this.groupResults.push({
+            groupNum: this.currentQuestion.groupNum,
+            name: this.currentQuestion.customName,
+            timeMs: finalTimeMs,
+            timeFormatted: formatted,
+            passed: true
+          });
+
+          const isLastQuestion = (this.currentIdx + 1 >= this.questions.length);
+
+          if (isLastQuestion && this.dom.gameFinishedBar) {
+            this.dom.gameFinishedBar.style.display = "block";
+          }
+
+          this.showRoundModal({
+            isWin: true,
+            title: `¡Excelente, ${this.currentQuestion.customName}!`,
+            timeFormatted: `${formatted} segundos`,
+            word: this.currentQuestion.answer,
+            explanation: this.currentQuestion.explanation,
+            btnText: isLastQuestion ? "Ver Podio" : "Siguiente Grupo ➔",
+            isFinal: isLastQuestion
+          });
+
+        } else {
+          // ERROR: Sin límite de intentos globales, el cronómetro sigue corriendo
+          this.audio.playError();
+
+          this.dom.riddleBox.classList.remove("shake-anim");
+          void this.dom.riddleBox.offsetWidth;
+          this.dom.riddleBox.classList.add("shake-anim");
+
+          alert(`¡Palabra incorrecta! Ingresaste "${raw}". Recuerda que es solo una palabra. ¡Sigue intentando, el cronómetro corre!`);
+          this.dom.userAnswerInput.select();
+          this.dom.userAnswerInput.focus();
+        }
+      }
+
+      showRoundModal({ isWin, title, timeFormatted, word, explanation, btnText, isFinal }) {
+        this.dom.modalIcon.textContent = isWin ? "🎉" : "💔";
+        this.dom.modalTitle.textContent = title;
+        this.dom.modalTitle.className = `modal-title ${isWin ? "win" : "error"}`;
+        this.dom.modalTimeBadge.innerHTML = `<span>⏱️ Tiempo: <strong>${timeFormatted}</strong></span>`;
+        this.dom.modalRevealedWord.textContent = word;
+        this.dom.modalExplanation.textContent = explanation;
+        this.dom.modalActionBtn.innerHTML = `<span>${btnText}</span> ${isFinal ? '<span aria-hidden="true">🏆</span>' : ''}`;
+        this.dom.modal.setAttribute("data-is-final", isFinal ? "true" : "false");
+
+        this.dom.modal.classList.add("active");
+        this.dom.modal.setAttribute("aria-hidden", "false");
+      }
+
+      showPodiumScreen() {
+        this.stopTimer();
+        this.dom.modal.classList.remove("active");
+        this.dom.modal.setAttribute("aria-hidden", "true");
+        this.dom.screenGame.classList.remove("active");
+        this.dom.screenRegister.classList.remove("active");
+        this.dom.screenPodium.classList.add("active");
+
+        this.audio.playFanfare();
+        this.confetti.burst(160);
+        this.renderPodium();
+      }
+
+      /* ==========================================================================
+         CRITERIO GANADOR: MENOR CANTIDAD DE TIEMPO QUE TOME RESPONDER (TOP 3)
+         ========================================================================== */
+      renderPodium() {
+        // Ordenar por MENOR TIEMPO (timeMs ascendente)
+        const validResults = [...this.groupResults]
+          .filter(r => r.passed)
+          .sort((a, b) => a.timeMs - b.timeMs);
+
+        try {
+          const storedBest = JSON.parse(localStorage.getItem("fte_time_records_v2") || "[]");
+          validResults.forEach(r => {
+            storedBest.push({ group: r.name, timeMs: r.timeMs, formatted: r.timeFormatted });
+          });
+          storedBest.sort((a, b) => a.timeMs - b.timeMs);
+          localStorage.setItem("fte_time_records_v2", JSON.stringify(storedBest.slice(0, 10)));
+        } catch (e) {}
+
+        this.dom.podiumTop3Grid.innerHTML = "";
+        this.dom.fullLeaderboardList.innerHTML = "";
+
+        if (validResults.length === 0) {
+          this.dom.podiumTop3Grid.innerHTML = `<div style="color: var(--text-muted); padding: 20px;">No se registraron tiempos en esta partida.</div>`;
+          return;
+        }
+
+        const top3 = validResults.slice(0, 3);
+        const rankConfigs = [
+          { rank: 1, medal: "🥇", label: "1° Puesto (Oro)", classSuffix: "rank-1" },
+          { rank: 2, medal: "🥈", label: "2° Puesto (Plata)", classSuffix: "rank-2" },
+          { rank: 3, medal: "🥉", label: "3° Puesto (Bronce)", classSuffix: "rank-3" }
+        ];
+
+        top3.forEach((team, idx) => {
+          const cfg = rankConfigs[idx];
+          const pillar = document.createElement("div");
+          pillar.className = `podium-pillar ${cfg.classSuffix}`;
+          pillar.innerHTML = `
+            <div class="podium-medal">${cfg.medal}</div>
+            <div class="podium-rank-label">${cfg.label}</div>
+            <div class="podium-team-name">${team.name}</div>
+            <div class="podium-time">⏱️ ${team.timeFormatted}</div>
+          `;
+          this.dom.podiumTop3Grid.appendChild(pillar);
+        });
+
+        // Tabla general con todas las posiciones
+        validResults.forEach((team, index) => {
+          const row = document.createElement("div");
+          row.className = `podium-row ${index === 0 ? "first-place" : ""}`;
+          const badgeMedal = index === 0 ? "🥇 1° Puesto" : (index === 1 ? "🥈 2° Puesto" : (index === 2 ? "🥉 3° Puesto" : `⭐ ${index + 1}° Puesto`));
+          row.innerHTML = `
+            <div class="team-badge-row">
+              <span style="min-width: 95px; color: ${index < 3 ? 'var(--neon-gold)' : 'var(--text-muted)'}; font-weight: 800;">${badgeMedal}</span>
+              <strong style="color: #ffffff;">${team.name}</strong>
+            </div>
+            <div class="time-badge-row">
+              <span>⏱️ ${team.timeFormatted}</span>
+            </div>
+          `;
+          this.dom.fullLeaderboardList.appendChild(row);
+        });
+      }
+
+      handleModalAction() {
+        const isFinal = this.dom.modal.getAttribute("data-is-final") === "true";
+        this.dom.modal.classList.remove("active");
+        this.dom.modal.setAttribute("aria-hidden", "true");
+
+        if (isFinal) {
+          this.showPodiumScreen();
+        } else {
+          this.currentIdx++;
+          this.loadRiddle(this.currentIdx);
+        }
+      }
+
+      finishTournament() {
+        this.showPodiumScreen();
+      }
+
+      resetToRegistration() {
+        this.stopTimer();
+        this.dom.modal.classList.remove("active");
+        this.dom.screenGame.classList.remove("active");
+        if (this.dom.screenPodium) {
+          this.dom.screenPodium.classList.remove("active");
+        }
+        if (this.dom.gameFinishedBar) {
+          this.dom.gameFinishedBar.style.display = "none";
+        }
+        this.dom.screenRegister.classList.add("active");
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      window.game = new TimeAttackGame();
+    });
+  </script>
+</body>
+</html>
